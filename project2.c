@@ -10,7 +10,12 @@ const int BUFFERSIZE = 112;
 const char SEPERATORS[] = " \t\n";
 const int MAXSIZE = 20;
 
-void append(int, char** );
+void append(char** );
+void score(char**);
+
+
+
+
 
 
 int main (int argc, char** argv)
@@ -40,14 +45,19 @@ int main (int argc, char** argv)
 		}
 
 		if(strcmp("append",command) == 0 ){
-				append(argc, argv);
+				append(argv);
 		}
 
 
 		else if(strcmp("score", command) == 0){
-				printf("This will change the score");
+				score(argv);
 		}
 
+		/*
+
+				ADD THE REST OF THE POSSIBLE DATABASE COMMANDS AND ALSO ENSURE THAT ONE OF THEM IS CALLED IF THERE IS NO MATCH THAN THE PROGRAM SHOULD EXIT
+
+		   */
 
 
 	return (0);
@@ -55,22 +65,60 @@ int main (int argc, char** argv)
 
 
 
-void append(int size, char** args){
+void append(char** args){
+
+		/*
+
+
+				FOR THE STRINGS READING IN INTS OR FLOATS MAY NOT BE ACCEPTABLE THIS CODE MAY HAVE TO CHANGE LATER
+
+		   */
 		
 		//Reading in the HW name
 		char hwName[MAXSIZE]; 
-		sscanf(args[2], "%[^\n]",hwName);
+		if(sscanf(args[2], "%[^\n]",hwName) != 1){
+				fprintf(stderr,"Invalid hwName");
+				exit(-1);
+		}
 		//Reading in the HW Type
 		char hwType[MAXSIZE];
-		sscanf(args[3], "%[^\n]", hwType);
+		if(sscanf(args[3], "%[^\n]", hwType) != 1){
+				fprintf(stderr,"Ivalid HW Type");
+				exit(-1);
+		}
 		//Reading int the Max possible score 
 		float maxScore;
-		sscanf(args[4], "%f", &maxScore);
+		if(sscanf(args[4], "%f", &maxScore)!= 1){
+				fprintf(stderr,"Invalid maxScore");
+				exit(-1);
+		}
 		//Reading in the actual score 
 		float actScore;
 		if(sscanf(args[5], "%f", &actScore) != 1){
-		perror("Wrong score type");
+				fprintf(stderr, "Invalid score");
+				exit(-1);
 		}
 
-		printf("%s %s  %.2f %.2f\n", hwName,hwType, maxScore, actScore);
+		printf("%s %s %.2f %.2f\n", hwName,hwType, maxScore, actScore);
+}
+
+
+
+void score(char** args){
+
+		//Reading in the index of the score to be changed 
+		int index;
+		if(sscanf(args[2], "%d", &index) != 1 ){
+				fprintf(stderr,"Invalid Index");
+				exit(-1);
+		} 
+
+		float score;
+		if(sscanf(args[3], "%f", &score) != 1){
+				fprintf(stderr, "Invalid Score");
+				exit(-1);
+		}
+
+		printf("%d %f", index, score);
+
 }

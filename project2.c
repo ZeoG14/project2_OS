@@ -12,7 +12,7 @@ const int MAXSIZE = 20;
 const int SIZE_TYPE_NAMES = 4;
 
 void append(char**, int );
-void score(char**);
+void score(char**, int);
 
 
 
@@ -22,7 +22,7 @@ void score(char**);
 int main (int argc, char** argv)
 {	
 		// Opening files "grades.bin" if it does not exist we are creating it. Only user can read and write
-		 int fd = open("grades.bin", O_WRONLY|O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
+		 int fd = open("grades.bin", O_RDWR|O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
 
 		// Writing error to stderr if file could not be opened
 		if(fd == -1 )
@@ -49,7 +49,7 @@ int main (int argc, char** argv)
 
 
 		else if(strcmp("score", command) == 0){
-				score(argv);
+				score(argv, fd);
 		}
 
 		/*
@@ -133,25 +133,25 @@ void append(char** args, int fd){
 				}
 		}
 
-		/*
-
-				TODO:
-				
-				fix offset since it is currently overwriting the previous record.
-				should probably use lseek()
-		   */
 				
 		//writing out our ar(record) to our file
 		if(write(fd, &ar, sizeof(AssignmentRecord)) != sizeof(AssignmentRecord)){
 				perror("Write");
 				exit(-1);
 		}
+
+
+		/*
+
+				10/13/20 - This method appears to be functioning as intended but further testing will be needed.
+
+		   */
 		
 }
 
 
 
-void score(char** args){
+void score(char** args,int fd){
 
 		//Reading in the index of the score to be changed 
 		int index;
@@ -159,13 +159,34 @@ void score(char** args){
 				fprintf(stderr,"Invalid Index");
 				exit(-1);
 		} 
-
+		//Reading in the new score value;
 		float score;
 		if(sscanf(args[3], "%f", &score) != 1){
 				fprintf(stderr, "Invalid Score");
 				exit(-1);
 		}
+				
 
-		printf("%d %f", index, score);
+
+		int size =  sizeof(AssignmentRecord);
+		//Getting the offset by multiplying by the size of Assignment Record
+		int byteLoc = index * size;
+		//Created the variable so the data can be read into it
+		AssignmentRecord ar;
+		//File descriptor
+		//Setting the offset based on the value calculated above
+		if(lseek(fd, byteLoc, SEEK_SET) == -1){
+				perror("lseek error: ");
+		}
+		//Reading in the data at the index and assigning it to ar
+		if(read(fd,&ar, sizeof(AssignmentRecord)== -1)){
+				perror("read error");
+		}	
+		//Changing the value of score
+		ar.score = score;
+		//Writing the modified Assignment Record back to the file.
+		if(write(fd,&ar,sizeof(AssignmentRecord)==-1)){
+				perror("write error: ");
+		}
 
 }

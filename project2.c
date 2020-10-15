@@ -22,7 +22,7 @@ void score(char**);
 int main (int argc, char** argv)
 {	
 		// Opening files "grades.bin" if it does not exist we are creating it. Only user can read and write
-		 int fd = open("grades.bin", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+		 int fd = open("grades.bin", O_WRONLY|O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
 
 		// Writing error to stderr if file could not be opened
 		if(fd == -1 )

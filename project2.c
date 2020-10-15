@@ -22,7 +22,7 @@ void score(char**, int);
 int main (int argc, char** argv)
 {	
 		// Opening files "grades.bin" if it does not exist we are creating it. Only user can read and write
-		 int fd = open("grades.bin", O_RDWR|O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
+		 int fd = open("grades.bin", O_RDWR| O_CREAT, S_IRUSR | S_IWUSR);
 
 		// Writing error to stderr if file could not be opened
 		if(fd == -1 )
@@ -51,6 +51,7 @@ int main (int argc, char** argv)
 		else if(strcmp("score", command) == 0){
 				score(argv, fd);
 		}
+
 
 		/*
 
@@ -113,13 +114,13 @@ void append(char** args, int fd){
 		// declaring first instance of AssignmentRecord from Record.h
 		AssignmentRecord ar;
 		//By default valid should be 0 which in this case is true
-		ar.valid = 0;
+		ar.valid = 0 ;
 		//using strcpy() to assing hwName to ar.name
 		strcpy(ar.name, hwName); 
 		//Setting the read-in maxScore to our record
 		ar.max_score = maxScore;
 		// Setting the actual score to our record
-		ar.score = actScore;
+		ar.score=actScore;
 		
 
 		//Iterating through type_name which is an array in Record.h
@@ -133,9 +134,14 @@ void append(char** args, int fd){
 				}
 		}
 
-				
+		int size = sizeof(AssignmentRecord);
+		if(lseek(fd, 0, SEEK_END) == -1){
+				perror("lseek error: ");
+				exit(-1);
+		}
+
 		//writing out our ar(record) to our file
-		if(write(fd, &ar, sizeof(AssignmentRecord)) != sizeof(AssignmentRecord)){
+		if(write(fd, &ar, size) != size){
 				perror("Write");
 				exit(-1);
 		}
@@ -177,16 +183,30 @@ void score(char** args,int fd){
 		//Setting the offset based on the value calculated above
 		if(lseek(fd, byteLoc, SEEK_SET) == -1){
 				perror("lseek error: ");
+				exit(-1);
 		}
 		//Reading in the data at the index and assigning it to ar
-		if(read(fd,&ar, sizeof(AssignmentRecord)== -1)){
+		if(read(fd,&ar, size) == -1){
 				perror("read error");
-		}	
+				exit(-1);
+		}
 		//Changing the value of score
 		ar.score = score;
+
+		if(lseek(fd, byteLoc, SEEK_SET) == -1){
+				perror("lseek error: ");
+				exit(-1);
+		}
 		//Writing the modified Assignment Record back to the file.
-		if(write(fd,&ar,sizeof(AssignmentRecord)==-1)){
+		if(write(fd,&ar,size) != size){
 				perror("write error: ");
+				exit(-1);
 		}
 
+		/*
+
+				Function appears to be working correctly but further testing may be needed
+		   */
+
 }
+

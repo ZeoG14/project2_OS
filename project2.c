@@ -16,9 +16,6 @@ void score(char**, int);
 
 
 
-
-
-
 int main (int argc, char** argv)
 {	
 		// Opening files "grades.bin" if it does not exist we are creating it. Only user can read and write
@@ -146,7 +143,6 @@ void append(char** args, int fd){
 				exit(-1);
 		}
 
-
 		/*
 
 				10/13/20 - This method appears to be functioning as intended but further testing will be needed.
@@ -173,23 +169,33 @@ void score(char** args,int fd){
 		}
 				
 
-
 		int size =  sizeof(AssignmentRecord);
 		//Getting the offset by multiplying by the size of Assignment Record
 		int byteLoc = index * size;
 		//Created the variable so the data can be read into it
 		AssignmentRecord ar;
-		//File descriptor
-		//Setting the offset based on the value calculated above
+		
+
+		//Getting the amount of bytes currently in the file
+		off_t eof = lseek(fd,0,SEEK_END);
+		//byteLoc is the byte location of the index, if this location if past the EOF than return an error.
+		if(byteLoc > eof){
+			fprintf(stderr, "Invalid Index\n");
+			exit(-1);
+		}
+
+		//setting the current file location to the byteLocation of the valid index
 		if(lseek(fd, byteLoc, SEEK_SET) == -1){
 				perror("lseek error: ");
 				exit(-1);
 		}
+
 		//Reading in the data at the index and assigning it to ar
 		if(read(fd,&ar, size) == -1){
 				perror("read error");
 				exit(-1);
 		}
+
 		//Changing the value of score
 		ar.score = score;
 
@@ -197,6 +203,7 @@ void score(char** args,int fd){
 				perror("lseek error: ");
 				exit(-1);
 		}
+
 		//Writing the modified Assignment Record back to the file.
 		if(write(fd,&ar,size) != size){
 				perror("write error: ");
@@ -205,7 +212,7 @@ void score(char** args,int fd){
 
 		/*
 
-				Function appears to be working correctly but further testing may be needed
+				Function appears to be functioning correctly. More testing may be needed.
 		   */
 
 }

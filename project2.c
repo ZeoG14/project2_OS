@@ -13,6 +13,7 @@ const int SIZE_TYPE_NAMES = 4;
 
 void append(char**, int );
 void score(char**, int);
+void valid(char**, int);
 
 
 
@@ -33,20 +34,25 @@ int main (int argc, char** argv)
 		// This will contain the command "append, valid, score etc...."
 		//My first approach will be to use if and else if statements since we can't use string with switch statement
 		
-		// if the command given is append
-    	if(argc == 1){
+    		if(argc == 1){
 				fprintf(stderr, "No Arguments");
 
 				exit(-1);
 		}
 
+		// if the command given is append
 		if(strcmp("append",command) == 0 ){
 				append(argv,fd);
 		}
 
-
+		// else if command given is score
 		else if(strcmp("score", command) == 0){
 				score(argv, fd);
+		}
+
+		//else if command given is valid
+		else if(strcmp("valid", command)==0){
+			valid(argv,fd);
 		}
 
 
@@ -110,8 +116,8 @@ void append(char** args, int fd){
 
 		// declaring first instance of AssignmentRecord from Record.h
 		AssignmentRecord ar;
-		//By default valid should be 0 which in this case is true
-		ar.valid = 0 ;
+		//By default valid should be 1 which in this case is true
+		ar.valid = 1 ;
 		//using strcpy() to assing hwName to ar.name
 		strcpy(ar.name, hwName); 
 		//Setting the read-in maxScore to our record
@@ -217,3 +223,131 @@ void score(char** args,int fd){
 
 }
 
+
+
+
+
+
+void valid(char** args,int fd){
+
+		//Reading in the index of the Assignment Record to be changed 
+		int index;
+		if(sscanf(args[2], "%d", &index) != 1 ){
+				fprintf(stderr,"Invalid Index");
+				exit(-1);
+		} 
+				
+		//byteSize of AssignmentRecord
+		int size =  sizeof(AssignmentRecord);
+
+		//Getting the offset by multiplying by the size of Assignment Record
+		int byteLoc = index * size;
+
+		//Created the variable so the data can be read into it
+		AssignmentRecord ar;
+		
+
+		//Getting the amount of bytes currently in the file
+		off_t eof = lseek(fd,0,SEEK_END);
+		
+		//byteLoc is the byte location of the index, if this location if past the EOF then return an error.
+		if(byteLoc > eof){
+			fprintf(stderr, "Invalid Index\n");
+			exit(-1);
+		}
+
+		//setting the current file location to the byteLocation of the valid index
+		if(lseek(fd, byteLoc, SEEK_SET) == -1){
+				perror("lseek error: ");
+				exit(-1);
+		}
+
+		//Reading in the data at the index and assigning it to ar
+		if(read(fd,&ar, size) == -1){
+				perror("read error");
+				exit(-1);
+		}
+		
+		//Changing the value of score
+		ar.valid = 1;
+
+		if(lseek(fd, byteLoc, SEEK_SET) == -1){
+				perror("lseek error: ");
+				exit(-1);
+		}
+
+		//Writing the modified Assignment Record back to the file.
+		if(write(fd,&ar,size) != size){
+				perror("write error: ");
+				exit(-1);
+		}
+
+		/*
+
+				Function appears to be functioning correctly. More testing may be needed.
+		   */
+
+}
+
+
+
+void invalid(char** args,int fd){
+
+		//Reading in the index of the Assignment Record to be changed 
+		int index;
+		if(sscanf(args[2], "%d", &index) != 1 ){
+				fprintf(stderr,"Invalid Index");
+				exit(-1);
+		} 
+				
+		//byteSize of AssignmentRecord
+		int size =  sizeof(AssignmentRecord);
+
+		//Getting the offset by multiplying by the size of Assignment Record
+		int byteLoc = index * size;
+
+		//Created the variable so the data can be read into it
+		AssignmentRecord ar;
+		
+
+		//Getting the amount of bytes currently in the file
+		off_t eof = lseek(fd,0,SEEK_END);
+		
+		//byteLoc is the byte location of the index, if this location if past the EOF then return an error.
+		if(byteLoc > eof){
+			fprintf(stderr, "Invalid Index\n");
+			exit(-1);
+		}
+
+		//setting the current file location to the byteLocation of the valid index
+		if(lseek(fd, byteLoc, SEEK_SET) == -1){
+				perror("lseek error: ");
+				exit(-1);
+		}
+
+		//Reading in the data at the index and assigning it to ar
+		if(read(fd,&ar, size) == -1){
+				perror("read error");
+				exit(-1);
+		}
+		
+		//Changing the value of score to reflect an invalid score
+		ar.valid = 0;
+
+		if(lseek(fd, byteLoc, SEEK_SET) == -1){
+				perror("lseek error: ");
+				exit(-1);
+		}
+
+		//Writing the modified Assignment Record back to the file.
+		if(write(fd,&ar,size) != size){
+				perror("write error: ");
+				exit(-1);
+		}
+
+		/*
+
+				Function appears to be functioning correctly. More testing may be needed.
+		   */
+
+}

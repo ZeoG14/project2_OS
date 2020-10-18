@@ -57,9 +57,7 @@ int main (int argc, char** argv)
 
 
 		/*
-
 				ADD THE REST OF THE POSSIBLE DATABASE COMMANDS AND ALSO ENSURE THAT ONE OF THEM IS CALLED IF THERE IS NO MATCH THAN THE PROGRAM SHOULD EXIT
-
 		   */
 
 
@@ -79,10 +77,7 @@ int main (int argc, char** argv)
 void append(char** args, int fd){
 
 		/*
-
-
 				FOR THE STRINGS READING IN INTS OR FLOATS MAY NOT BE ACCEPTABLE THIS CODE MAY HAVE TO CHANGE LATER
-
 		   */
 		
 		//Reading in the HW name
@@ -113,11 +108,16 @@ void append(char** args, int fd){
 
 		//ensuring it is a proper string by adding the terminating character to the end
 		hwName[NAME_SIZE - 1] = 0;
-
+		
 		// declaring first instance of AssignmentRecord from Record.h
 		AssignmentRecord ar;
+		//creating a temp buffer to make sure all values are 0;
+		unsigned char* b[sizeof(AssignmentRecord)];
+		for(int i=0; i<sizeof(AssignmentRecord); ++i){
+			b[i] = 0x00;		}
+		memcpy(&ar, b, sizeof(AssignmentRecord));
 		//By default valid should be 1 which in this case is true
-		ar.valid = 1 ;
+		ar.valid = 1;
 		//using strcpy() to assing hwName to ar.name
 		strcpy(ar.name, hwName); 
 		//Setting the read-in maxScore to our record
@@ -150,9 +150,7 @@ void append(char** args, int fd){
 		}
 
 		/*
-
 				10/13/20 - This method appears to be functioning as intended but further testing will be needed.
-
 		   */
 		
 }
@@ -217,7 +215,6 @@ void score(char** args,int fd){
 		}
 
 		/*
-
 				Function appears to be functioning correctly. More testing may be needed.
 		   */
 
@@ -245,7 +242,6 @@ void valid(char** args,int fd){
 
 		//Created the variable so the data can be read into it
 		AssignmentRecord ar;
-		
 
 		//Getting the amount of bytes currently in the file
 		off_t eof = lseek(fd,0,SEEK_END);
@@ -283,7 +279,6 @@ void valid(char** args,int fd){
 		}
 
 		/*
-
 				Function appears to be functioning correctly. More testing may be needed.
 		   */
 
@@ -346,7 +341,6 @@ void invalid(char** args,int fd){
 		}
 
 		/*
-
 				Function appears to be functioning correctly. More testing may be needed.
 		   */
 

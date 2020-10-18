@@ -6,21 +6,22 @@
 # include <fcntl.h>
 # include <string.h>
 # include "record.h"
+# include <ctype.h>
 
-
-const int MAXSIZE = 20;
+const int MAXSIZE = 23;
 const int SIZE_TYPE_NAMES = 4;
 
 void append(char**, int );
 void score(char**, int);
 void valid(char**, int);
+void invalid(char**, int);
 
 
 
 int main (int argc, char** argv)
 {	
 		// Opening files "grades.bin" if it does not exist we are creating it. Only user can read and write
-		 int fd = open("grades.bin", O_RDWR| O_CREAT, S_IRUSR | S_IWUSR);
+		 int fd = open("grades.bin", O_RDWR| O_CREAT, 0777);
 
 		// Writing error to stderr if file could not be opened
 		if(fd == -1 )
@@ -42,25 +43,39 @@ int main (int argc, char** argv)
 
 		// if the command given is append
 		if(strcmp("append",command) == 0 ){
+			if(argv[2] == NULL){
+				fprintf(stderr,"Invalid Arguments\n");
+				exit(-1);
+			}
 				append(argv,fd);
 		}
 
 		// else if command given is score
 		else if(strcmp("score", command) == 0){
+			if(argv[2] == NULL){
+				fprintf(stderr,"Invalid Arguments\n");
+				exit(-1);
+			}
 				score(argv, fd);
 		}
 
 		//else if command given is valid
 		else if(strcmp("valid", command)==0){
+			if(argv[2] == NULL){
+				fprintf(stderr,"Invalid Arguments\n");
+				exit(-1);
+			}
 			valid(argv,fd);
 		}
 
 
-		/*
-				ADD THE REST OF THE POSSIBLE DATABASE COMMANDS AND ALSO ENSURE THAT ONE OF THEM IS CALLED IF THERE IS NO MATCH THAN THE PROGRAM SHOULD EXIT
-		   */
-
-
+		else if(strcmp("invald", command) == 0 ){
+			if(argv[2] == NULL){
+				fprintf(stderr,"Invalid Arguments\n");
+				exit(-1);
+			}
+			invalid(argv,fd);
+		}
 
 
 
@@ -82,24 +97,29 @@ void append(char** args, int fd){
 		
 		//Reading in the HW name
 		char hwName[MAXSIZE]; 
+		if(args[2] == NULL) exit(-1);
 		if(sscanf(args[2], "%23[^\n]",hwName) != 1){
 				fprintf(stderr,"Invalid hwName");
 				exit(-1);
 		}
 		//Reading in the HW Type
 		char hwType[MAXSIZE];
-		if(sscanf(args[3], "%[^\n]", hwType) != 1){
+		if(args[3] == NULL) exit(-1);
+		if(sscanf(args[3], "%s[^\n]", hwType) != 1){
 				fprintf(stderr,"Ivalid HW Type");
 				exit(-1);
 		}
 		//Reading int the Max possible score 
 		float maxScore;
-		if(sscanf(args[4], "%f", &maxScore)!= 1){
+		if(args[4] == NULL) exit(-1);
+		if(sscanf(args[4], "%f", &maxScore) != 1){
 				fprintf(stderr,"Invalid maxScore");
 				exit(-1);
 		}
 		//Reading in the actual score 
 		float actScore;
+
+		if(args[5] == NULL) exit(-1);
 		if(sscanf(args[5], "%f", &actScore) != 1){
 				fprintf(stderr, "Invalid score");
 				exit(-1);
@@ -108,6 +128,12 @@ void append(char** args, int fd){
 
 		//ensuring it is a proper string by adding the terminating character to the end
 		hwName[NAME_SIZE - 1] = 0;
+		for(int i = 0; i < strlen(hwType); ++i){
+			if(isalpha(hwType[i]) == 0){
+				fprintf(stderr, "Invalid Name\n");
+				exit(-1);
+			}
+		}
 		
 		// declaring first instance of AssignmentRecord from Record.h
 		AssignmentRecord ar;

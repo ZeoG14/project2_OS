@@ -1,8 +1,15 @@
-# include <stdio.h>
+/*
+ *@Author: Eliseo Garica
+ *@Project 2 : Intro To Os
+*/
+
+
+#include <stdio.h>
 # include <stdlib.h>
 # include <unistd.h>
 # include <sys/types.h>
 # include <sys/stat.h>
+# include <sys/wait.h>
 # include <fcntl.h>
 # include <string.h>
 # include "record.h"
@@ -15,14 +22,15 @@ void append(char**, int );
 void score(char**, int);
 void valid(char**, int);
 void invalid(char**, int);
-void text(int fd);
-
+void text(int);
+void server();
+void html(int);
 
 
 int main (int argc, char** argv)
 {	
 		// Opening files "grades.bin" if it does not exist we are creating it. Only user can read and write
-		 int fd = open("grades.bin", O_RDWR| O_CREAT, 0777);
+		 int fd = open("grades.bin", O_RDWR| O_CREAT, S_IRUSR | S_IWUSR);
 
 		// Writing error to stderr if file could not be opened
 		if(fd == -1 )
@@ -80,13 +88,21 @@ int main (int argc, char** argv)
 				fprintf(stderr,"Invalid Arguments\n");
 				exit(-1);
 			}
-			printf("In else if\n");
 			invalid(argv,fd);
 		}
 
 		else if(strcmp("text", command) == 0){
 			text(fd);
 		}
+		
+		else if(strcmp("html", command) == 0){
+			html(fd);
+		}
+		else if(strcmp("server", command) == 0){
+			server();
+			main(argc,argv);
+		}
+
 
 
 
@@ -178,12 +194,14 @@ void append(char** args, int fd){
 						break; 
 				}
 		}
-		//If it was not found
+		//If supplied type was not valid break and send error 
 		if(i >= SIZE_TYPE_NAMES)
 		{
-			fprintf(stderr, "INV TYPE: \n");
+			fprintf(stderr, "Type does not exist: \n");
 			exit(-1);
 		}
+
+
 		int size = sizeof(AssignmentRecord);
 		if(lseek(fd, 0, SEEK_END) == -1){
 				perror("lseek error: ");
@@ -413,14 +431,14 @@ void text(int fd){
 
 	
 	byteLoc = 1 * sizeof(AssignmentRecord);
-	size =  sizeof(AssignmentRecord);
 
+	AssignmentRecord br;
 	if(lseek(fd,byteLoc, SEEK_CUR) == -1)exit(-1);
 
-	if(read(fd,&ar,size)  == -1){
+	if(read(fd,&br,size)  == -1){
 		exit(-1);
 	}
-	printf("%10d %10s %10d %10f %10f\n", ar.valid, ar.name, ar.type, ar.max_score, ar.score);
+	printf("%10d %10s %10d %10f %10f\n", br.valid, br.name, br.type, br.max_score, br.score);
 
 
 	 
@@ -435,4 +453,248 @@ void text(int fd){
 	printf("%10d %10s %10d %10f %10f\n", ar.valid, ar.name, ar.type, ar.max_score, ar.score);
 }
 
+void server(){
+
+	int fd = open("grades.html", O_WRONLY );
+
+	close(1);
+	dup2(fd,1);
+	close (fd);
 	
+	printf("<HTML>\n");
+	printf("<HEAD>\n");
+	printf("<TITLE>CS 3113 Grades</TITLE>\n");
+	printf("</HEAD>\n");
+	printf("<BODY>\n");
+	printf("<H1>CS 3113 Grades</H1>\n");
+	printf("<H2>Valid Grades</H2>\n");
+	printf("<TABLE BORDER=2>\n");
+	printf("<TR>\n");
+	printf("<TD> <B>Index</B>\n");
+	printf("<TD> <B>Assignment Name</B>\n");
+	printf("<TD> <B>Assignment Type</B>\n");
+	printf("<TD> <B>Score</B>\n");
+	printf("<TD> <B>Max Score</B>\n");
+	
+	//keeping track of grades and maximum to calculate avg
+	float ssum = 0;
+	float msum = 0;
+	float avg = 0;
+
+	//creating index variable to navigate grades.bin
+	int index = 0;
+	int arSize = sizeof(AssignmentRecord);
+	//byteLoc will specify where the reading will have to happen.
+	int byteLoc = index * arSize;
+	int d = open("grades.bin", O_RDONLY);
+
+	off_t eof = lseek(d,0,SEEK_END);
+	if(lseek(d,0,SEEK_SET)!=eof){
+	//if there are valid grades in grades.bin the output will be produced here.
+		while(lseek(d, byteLoc, SEEK_SET) != -1){
+			//Making sure the loop breaks if it has reached the end of the file
+		       if(byteLoc >= eof) break;
+			//Creating ar to hold the data being read in from the file.
+			AssignmentRecord ar;
+			//Read the current index and adding it's contents to the html file.
+			if(read(d,&ar, arSize) != -1){
+				if(ar.valid == 1){
+
+					printf("<TR>\n");
+
+					printf("<TD> %d\n", index);
+		       			printf("<TD> %s\n", ar.name);
+					printf("<TD> %s\n", type_names[ar.type]);
+					printf(	"<TD> %.2f\n", ar.score);
+					printf("<TD> %.2f\n", ar.max_score);
+					
+					ssum += ar.score;
+					msum += ar.max_score;
+				}
+			}
+			index++;
+			byteLoc = index * arSize;
+		}
+	}
+
+
+	printf("</TABLE>\n");
+	printf("<P>\n");
+	if(ssum != 0 ){
+		avg = (ssum / msum) * 100.00;
+		printf("<B>Average score: %.2f percent</B>\n", avg);
+	}
+	printf("<P>\n");
+	printf("<H2>Non-Valid Grades</H2>\n");
+	printf("<TABLE BORDER=2>\n");
+	printf("<TR>\n");
+	printf("<TD> <B>Index</B>\n");
+	printf("<TD> <B>Assignment Name</B>\n");
+	printf("<TD> <B>Assignment Type</B>\n");
+	printf("<TD> <B>Score</B>\n");
+	printf("<TD> <B>Max Score</B>\n");
+
+
+
+	index = 0;
+	byteLoc = index * arSize;
+	if(lseek(d,0,SEEK_SET)!=eof){
+	//if there are valid grades in grades.bin the output will be produced here.
+		while(lseek(d, byteLoc, SEEK_SET) != -1){
+			//Making sure the loop breaks if it has reached the end of the file
+		       if(byteLoc >= eof) break;
+			//Creating ar to hold the data being read in from the file.
+			AssignmentRecord ar;
+			//Read the current index and adding it's contents to the html file.
+			if(read(d,&ar, arSize) != -1){
+				if(ar.valid == 0){
+
+					printf("<TR>\n");
+
+					printf("<TD> %d\n", index);
+		       			printf("<TD> %s\n", ar.name);
+					printf("<TD> %s\n", type_names[ar.type]);
+					printf("<TD> %.2f\n", ar.score);
+
+					printf("<TD> %.2f\n", ar.max_score);
+				}
+			}
+			index++;
+			byteLoc = index * arSize;
+		}
+	}
+	
+
+	printf("</TABLE>\n");	
+	printf("<P>\n");
+	printf("<H2>References</H2>\n");
+	printf("<UL>\n");
+	printf("<LI><A HREF=\"https://cs.ou.edu/~fagg/classes/cs3113\">Introduction to Operating Systems</A>\n");
+	printf("<LI><A HREF=\"https://cs.ou.edu\">Computer Science Department</A>\n");
+	printf("</UL>\n");
+	printf("<P>\n");
+	printf("</BODY>\n");
+	printf("</HTML>\n");
+	
+	fflush(stdout);
+	close(1);
+	sleep(1);
+}
+
+
+void html(int fd){
+	
+	printf("<HTML>\n");
+	printf("<HEAD>\n");
+	printf("<TITLE>CS 3113 Grades</TITLE>\n");
+	printf("</HEAD>\n");
+	printf("<BODY>\n");
+	printf("<H1>CS 3113 Grades</H1>\n");
+	printf("<H2>Valid Grades</H2>\n");
+	printf("<TABLE BORDER=2>\n");
+	printf("<TR>\n");
+	printf("<TD> <B>Index</B>\n");
+	printf("<TD> <B>Assignment Name</B>\n");
+	printf("<TD> <B>Assignment Type</B>\n");
+	printf("<TD> <B>Score</B>\n");
+	printf("<TD> <B>Max Score</B>\n");
+	
+	//keeping track of grades and maximum to calculate avg
+	float ssum = 0;
+	float msum = 0;
+	float avg = 0;
+
+	//creating index variable to navigate grades.bin
+	int index = 0;
+	int arSize = sizeof(AssignmentRecord);
+	//byteLoc will specify where the reading will have to happen.
+	int byteLoc = index * arSize;
+
+	off_t eof = lseek(fd,0,SEEK_END);
+	if(lseek(fd,0,SEEK_SET)!=eof){
+	//if there are valid grades in grades.bin the output will be produced here.
+		while(lseek(fd, byteLoc, SEEK_SET) != -1){
+			//Making sure the loop breaks if it has reached the end of the file
+		       if(byteLoc >= eof) break;
+			//Creating ar to hold the data being read in from the file.
+			AssignmentRecord ar;
+			//Read the current index and adding it's contents to the html file.
+			if(read(fd,&ar, arSize) != -1){
+				if(ar.valid == 1){
+
+					printf("<TR>\n");
+
+					printf("<TD> %d\n", index);
+		       			printf("<TD> %s\n", ar.name);
+					printf("<TD> %s\n", type_names[ar.type]);
+					printf(	"<TD> %.2f\n", ar.score);
+					printf("<TD> %.2f\n", ar.max_score);
+					
+					ssum += ar.score;
+					msum += ar.max_score;
+				}
+			}
+			index++;
+			byteLoc = index * arSize;
+		}
+	}
+
+
+	printf("</TABLE>\n");
+	printf("<P>\n");
+	if(ssum != 0 ){
+		avg = (ssum / msum) * 100.00;
+		printf("<B>Average score: %.2f percent</B>\n", avg);
+	}
+	printf("<P>\n");
+	printf("<H2>Non-Valid Grades</H2>\n");
+	printf("<TABLE BORDER=2>\n");
+	printf("<TR>\n");
+	printf("<TD> <B>Index</B>\n");
+	printf("<TD> <B>Assignment Name</B>\n");
+	printf("<TD> <B>Assignment Type</B>\n");
+	printf("<TD> <B>Score</B>\n");
+	printf("<TD> <B>Max Score</B>\n");
+
+
+
+	index = 0;
+	byteLoc = index * arSize;
+	if(lseek(fd,0,SEEK_SET)!=eof){
+	//if there are valid grades in grades.bin the output will be produced here.
+		while(lseek(fd, byteLoc, SEEK_SET) != -1){
+			//Making sure the loop breaks if it has reached the end of the file
+		       if(byteLoc >= eof) break;
+			//Creating ar to hold the data being read in from the file.
+			AssignmentRecord ar;
+			//Read the current index and adding it's contents to the html file.
+			if(read(fd,&ar, arSize) != -1){
+				if(ar.valid == 0){
+
+					printf("<TR>\n");
+
+					printf("<TD> %d\n", index);
+		       			printf("<TD> %s\n", ar.name);
+					printf("<TD> %s\n", type_names[ar.type]);
+					printf("<TD> %.2f\n", ar.score);
+
+					printf("<TD> %.2f\n", ar.max_score);
+				}
+			}
+			index++;
+			byteLoc = index * arSize;
+		}
+	}
+	
+
+	printf("</TABLE>\n");	
+	printf("<P>\n");
+	printf("<H2>References</H2>\n");
+	printf("<UL>\n");
+	printf("<LI><A HREF=\"https://cs.ou.edu/~fagg/classes/cs3113\">Introduction to Operating Systems</A>\n");
+	printf("<LI><A HREF=\"https://cs.ou.edu\">Computer Science Department</A>\n");
+	printf("</UL>\n");
+	printf("<P>\n");
+	printf("</BODY>\n");
+	printf("</HTML>\n");
+}

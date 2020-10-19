@@ -1,7 +1,4 @@
-all: create
-
-create:
+all:
 	gcc -Wall -g -o project2 project2.c
-	
-.PHONY clean:
+clean:
 	rm -rf *o project2

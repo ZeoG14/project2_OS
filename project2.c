@@ -15,6 +15,7 @@ void append(char**, int );
 void score(char**, int);
 void valid(char**, int);
 void invalid(char**, int);
+void text(int fd);
 
 
 
@@ -69,12 +70,17 @@ int main (int argc, char** argv)
 		}
 
 
-		else if(strcmp("invald", command) == 0 ){
+		else if(strcmp("invalid", command) == 0 ){
 			if(argv[2] == NULL){
 				fprintf(stderr,"Invalid Arguments\n");
 				exit(-1);
 			}
+			printf("In else if\n");
 			invalid(argv,fd);
+		}
+
+		else if(strcmp("text", command) == 0){
+			text(fd);
 		}
 
 
@@ -96,7 +102,8 @@ void append(char** args, int fd){
 		   */
 		
 		//Reading in the HW name
-		char hwName[MAXSIZE]; 
+		char hwName[MAXSIZE];
+	       	for(int i = 0; i < MAXSIZE; ++i ){hwName[i] = '\0';}	
 		if(args[2] == NULL) exit(-1);
 		if(sscanf(args[2], "%23[^\n]",hwName) != 1){
 				fprintf(stderr,"Invalid hwName");
@@ -127,7 +134,9 @@ void append(char** args, int fd){
 
 
 		//ensuring it is a proper string by adding the terminating character to the end
-		hwName[NAME_SIZE - 1] = 0;
+		hwName[NAME_SIZE - 1] = '\0';
+
+
 		for(int i = 0; i < strlen(hwType); ++i){
 			if(isalpha(hwType[i]) == 0){
 				fprintf(stderr, "Invalid Name\n");
@@ -351,6 +360,7 @@ void invalid(char** args,int fd){
 				perror("read error");
 				exit(-1);
 		}
+
 		
 		//Changing the value of score to reflect an invalid score
 		ar.valid = 0;
@@ -371,3 +381,46 @@ void invalid(char** args,int fd){
 		   */
 
 }
+
+
+
+void text(int fd){
+	
+	AssignmentRecord ar;
+	
+	int byteLoc = 0 * sizeof(AssignmentRecord);
+	int size =  sizeof(AssignmentRecord);
+
+	if(lseek(fd,byteLoc, SEEK_CUR) == -1)exit(-1);
+
+	if(read(fd,&ar,size)  == -1){
+		exit(-1);
+	}
+	printf("%10d %10s %10d %10f %10f\n", ar.valid, ar.name, ar.type, ar.max_score, ar.score);
+
+
+	
+	byteLoc = 1 * sizeof(AssignmentRecord);
+	size =  sizeof(AssignmentRecord);
+
+	if(lseek(fd,byteLoc, SEEK_CUR) == -1)exit(-1);
+
+	if(read(fd,&ar,size)  == -1){
+		exit(-1);
+	}
+	printf("%10d %10s %10d %10f %10f\n", ar.valid, ar.name, ar.type, ar.max_score, ar.score);
+
+
+	 
+	byteLoc = 2  * sizeof(AssignmentRecord);
+	size =  sizeof(AssignmentRecord);
+
+	if(lseek(fd,byteLoc, SEEK_CUR) == -1)exit(-1);
+
+	if(read(fd,&ar,size)  == -1){
+		exit(-1);
+	}
+	printf("%10d %10s %10d %10f %10f\n", ar.valid, ar.name, ar.type, ar.max_score, ar.score);
+}
+
+	

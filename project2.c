@@ -51,6 +51,7 @@ int main (int argc, char** argv)
 
 			if(argc != 6){
 				fprintf(stderr, "Invalid Argument\n");
+				exit(-1);
 			}
 				append(argv,fd);
 		}

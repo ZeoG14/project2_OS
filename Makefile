@@ -1,4 +1,6 @@
-all:
-	gcc -Wall -g -o project2 project2.c
+all: create
+
+create:
+	gcc -o project2 project2.c
 clean:
-	rm -rf *o project2
+	rm -rf *.o project2

@@ -48,6 +48,10 @@ int main (int argc, char** argv)
 				fprintf(stderr,"Invalid Arguments\n");
 				exit(-1);
 			}
+
+			if(argc != 6){
+				fprintf(stderr, "Invalid Argument\n");
+			}
 				append(argv,fd);
 		}
 
@@ -100,6 +104,8 @@ void append(char** args, int fd){
 		/*
 				FOR THE STRINGS READING IN INTS OR FLOATS MAY NOT BE ACCEPTABLE THIS CODE MAY HAVE TO CHANGE LATER
 		   */
+		
+
 		
 		//Reading in the HW name
 		char hwName[MAXSIZE];
@@ -160,9 +166,9 @@ void append(char** args, int fd){
 		// Setting the actual score to our record
 		ar.score=actScore;
 		
-
+		int i;
 		//Iterating through type_name which is an array in Record.h
-		for(int i = 0; i < SIZE_TYPE_NAMES ;++i ){
+		for(i = 0; i < SIZE_TYPE_NAMES ;++i ){
 				// iterating until we find the int position of the hwType
 				if(strcmp(type_names[i],hwType) == 0){
 						//assigning int position to ar.type
@@ -171,7 +177,12 @@ void append(char** args, int fd){
 						break; 
 				}
 		}
-
+		//If it was not found
+		if(i >= SIZE_TYPE_NAMES)
+		{
+			fprintf(stderr, "INV TYPE: \n");
+			exit(-1);
+		}
 		int size = sizeof(AssignmentRecord);
 		if(lseek(fd, 0, SEEK_END) == -1){
 				perror("lseek error: ");

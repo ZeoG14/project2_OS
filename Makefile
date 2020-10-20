@@ -1,4 +1,4 @@
-all: create 
+all: create fifo
 fifo:
 	mkfifo grades.html
 

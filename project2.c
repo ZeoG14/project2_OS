@@ -22,7 +22,6 @@ void append(char**, int );
 void score(char**, int);
 void valid(char**, int);
 void invalid(char**, int);
-void text(int);
 void server();
 void html(int);
 
@@ -90,11 +89,6 @@ int main (int argc, char** argv)
 			}
 			invalid(argv,fd);
 		}
-
-		else if(strcmp("text", command) == 0){
-			text(fd);
-		}
-		
 		else if(strcmp("html", command) == 0){
 			html(fd);
 		}
@@ -102,8 +96,10 @@ int main (int argc, char** argv)
 			server();
 			main(argc,argv);
 		}
-
-
+		else{
+			fprintf(stderr, "No matching command found\n");
+			exit(-1);
+		}
 
 
 		if(close(fd) != 0){
@@ -410,47 +406,6 @@ void invalid(char** args,int fd){
 				Function appears to be functioning correctly. More testing may be needed.
 		   */
 
-}
-
-
-
-void text(int fd){
-	
-	AssignmentRecord ar;
-	
-	int byteLoc = 0 * sizeof(AssignmentRecord);
-	int size =  sizeof(AssignmentRecord);
-
-	if(lseek(fd,byteLoc, SEEK_CUR) == -1)exit(-1);
-
-	if(read(fd,&ar,size)  == -1){
-		exit(-1);
-	}
-	printf("%10d %10s %10d %10f %10f\n", ar.valid, ar.name, ar.type, ar.max_score, ar.score);
-
-
-	
-	byteLoc = 1 * sizeof(AssignmentRecord);
-
-	AssignmentRecord br;
-	if(lseek(fd,byteLoc, SEEK_CUR) == -1)exit(-1);
-
-	if(read(fd,&br,size)  == -1){
-		exit(-1);
-	}
-	printf("%10d %10s %10d %10f %10f\n", br.valid, br.name, br.type, br.max_score, br.score);
-
-
-	 
-	byteLoc = 2  * sizeof(AssignmentRecord);
-	size =  sizeof(AssignmentRecord);
-
-	if(lseek(fd,byteLoc, SEEK_CUR) == -1)exit(-1);
-
-	if(read(fd,&ar,size)  == -1){
-		exit(-1);
-	}
-	printf("%10d %10s %10d %10f %10f\n", ar.valid, ar.name, ar.type, ar.max_score, ar.score);
 }
 
 void server(){
